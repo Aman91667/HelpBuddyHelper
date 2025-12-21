@@ -1,0 +1,234 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Calm light-green theme — soft, nature-inspired greens replacing teals. */
+
+@layer base {
+  :root {
+    --background: 120 40% 97%;
+    --foreground: 160 25% 20%;
+
+    --card: 0 0% 100%;
+    --card-foreground: 160 25% 20%;
+
+    --popover: 0 0% 100%;
+    --popover-foreground: 160 25% 20%;
+
+    /* === Calm Green Core === */
+    --primary: 142 55% 45%; /* main accent: soft natural green */
+    --primary-foreground: 0 0% 100%;
+    --primary-glow: 142 55% 60%;
+
+    --secondary: 100 40% 70%;
+    --secondary-foreground: 160 25% 20%;
+
+    --success: 142 60% 40%;
+    --success-foreground: 0 0% 100%;
+    
+    --warning: 50 90% 50%;
+    --warning-foreground: 160 25% 20%;
+    
+    --info: 160 35% 50%;
+    --info-foreground: 0 0% 100%;
+
+    --muted: 120 40% 96%;
+    --muted-foreground: 160 15% 40%;
+
+    --accent: 142 55% 45%;
+    --accent-foreground: 0 0% 100%;
+
+    --destructive: 0 70% 50%;
+    --destructive-foreground: 0 0% 100%;
+
+    --border: 120 30% 90%;
+    --input: 120 30% 90%;
+    --ring: 142 55% 45%;
+
+    --radius: 1rem;
+
+    /* === Gradients tuned to calm light green === */
+    --gradient-primary: linear-gradient(135deg, hsl(142 55% 50%), hsl(120 40% 75%));
+    --gradient-soft: linear-gradient(180deg, hsl(120 40% 98%), hsl(120 40% 94%));
+    --gradient-success: linear-gradient(135deg, hsl(142 60% 40%), hsl(142 60% 50%));
+    --gradient-premium: linear-gradient(135deg, hsl(142 55% 50%), hsl(100 40% 70%), hsl(160 35% 50%));
+
+    /* === Shadows softened to match the calmer tone === */
+    --shadow-glow: 0 8px 32px hsl(142 55% 45% / 0.15);
+    --shadow-card: 0 4px 24px hsl(142 20% 25% / 0.08);
+    --shadow-premium: 0 20px 60px hsl(142 55% 45% / 0.2);
+    --shadow-success: 0 8px 24px hsl(142 60% 40% / 0.25);
+
+    /* === Sidebar variants === */
+    --sidebar-background: 0 0% 100%;
+    --sidebar-foreground: 160 25% 20%;
+    --sidebar-primary: 142 55% 45%;
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 120 40% 96%;
+    --sidebar-accent-foreground: 142 55% 45%;
+    --sidebar-border: 120 30% 90%;
+    --sidebar-ring: 142 55% 45%;
+  }
+
+  /* === Dark Mode tuned to a forest green depth === */
+  .dark {
+    --background: 160 25% 12%;
+    --foreground: 120 30% 96%;
+
+    --card: 160 25% 15%;
+    --card-foreground: 120 30% 96%;
+
+    --popover: 160 25% 15%;
+    --popover-foreground: 120 30% 96%;
+
+    --primary: 142 50% 50%;
+    --primary-foreground: 160 25% 10%;
+    --primary-glow: 142 50% 60%;
+
+    --secondary: 100 35% 65%;
+    --secondary-foreground: 160 25% 10%;
+
+    --success: 142 50% 45%;
+    --success-foreground: 0 0% 100%;
+    
+    --warning: 50 90% 50%;
+    --warning-foreground: 160 25% 10%;
+    
+    --info: 160 35% 55%;
+    --info-foreground: 0 0% 100%;
+
+    --muted: 160 25% 20%;
+    --muted-foreground: 120 20% 70%;
+
+    --accent: 142 50% 50%;
+    --accent-foreground: 160 25% 10%;
+
+    --destructive: 0 70% 40%;
+    --destructive-foreground: 120 30% 96%;
+
+    --border: 160 25% 25%;
+    --input: 160 25% 25%;
+    --ring: 142 50% 50%;
+
+    --gradient-primary: linear-gradient(135deg, hsl(142 50% 50%), hsl(100 40% 65%));
+    --gradient-soft: linear-gradient(180deg, hsl(160 25% 15%), hsl(160 25% 18%));
+    --gradient-success: linear-gradient(135deg, hsl(142 50% 45%), hsl(142 50% 55%));
+    --gradient-premium: linear-gradient(135deg, hsl(142 50% 50%), hsl(100 40% 70%), hsl(160 35% 55%));
+
+    --shadow-glow: 0 8px 32px hsl(142 50% 45% / 0.25);
+    --shadow-card: 0 4px 24px hsl(0 0% 0% / 0.3);
+    --shadow-premium: 0 20px 60px hsl(142 50% 45% / 0.3);
+    --shadow-success: 0 8px 24px hsl(142 50% 45% / 0.3);
+
+    --sidebar-background: 160 25% 15%;
+    --sidebar-foreground: 120 30% 96%;
+    --sidebar-primary: 142 50% 50%;
+    --sidebar-primary-foreground: 160 25% 10%;
+    --sidebar-accent: 160 25% 22%;
+    --sidebar-accent-foreground: 142 50% 50%;
+    --sidebar-border: 160 25% 25%;
+    --sidebar-ring: 142 50% 50%;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+
+  body {
+    @apply bg-background text-foreground font-sans antialiased;
+  }
+
+  @font-face {
+    font-family: 'Inter';
+    font-display: swap;
+  }
+}
+
+@layer utilities {
+  .glass-card {
+    @apply bg-card/80 backdrop-blur-xl shadow-lg border border-border/50;
+  }
+
+  .gradient-primary {
+    background: var(--gradient-primary);
+  }
+
+  .gradient-soft {
+    background: var(--gradient-soft);
+  }
+  
+  .gradient-success {
+    background: var(--gradient-success);
+  }
+  
+  .gradient-premium {
+    background: var(--gradient-premium);
+  }
+
+  .shadow-glow {
+    box-shadow: var(--shadow-glow);
+  }
+
+  .shadow-card {
+    box-shadow: var(--shadow-card);
+  }
+  
+  .shadow-premium {
+    box-shadow: var(--shadow-premium);
+  }
+  
+  .shadow-success {
+    box-shadow: var(--shadow-success);
+  }
+
+  .animate-fade-in {
+    animation: fadeIn 0.5s ease-in-out;
+  }
+
+  .animate-slide-up {
+    animation: slideUp 0.6s ease-out;
+  }
+
+  @keyframes fadeIn {
+    from {
+      opacity: 0;
+    }
+    to {
+      opacity: 1;
+    }
+  }
+
+  @keyframes slideUp {
+    from {
+      opacity: 0;
+      transform: translateY(20px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  .no-horizontal-scroll {
+    overflow-x: hidden;
+  }
+
+  .hide-scrollbar {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+  .hide-scrollbar::-webkit-scrollbar {
+    display: none;
+  }
+
+  .benefits-grid {
+    @apply grid grid-cols-1 sm:grid-cols-2 gap-3;
+  }
+
+  .benefit-card {
+    @apply p-3 rounded-2xl border border-border shadow-card bg-card;
+    min-width: 0;
+  }
+}
