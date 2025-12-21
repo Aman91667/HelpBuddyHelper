@@ -1,7 +1,7 @@
 import { io, Socket } from 'socket.io-client';
 
-const rawApiUrl = import.meta.env.VITE_API_URL || 'http://localhost:3000/api';
-const SOCKET_URL = (rawApiUrl as string).replace(/\/api\/?$/i, '') || 'http://localhost:3000';
+const rawApiUrl = import.meta.env.VITE_API_URL || 'https://helpbuddyback.onrender.com/api';
+const SOCKET_URL = (rawApiUrl as string).replace(/\/api\/?$/i, '') || 'https://helpbuddyback.onrender.com';
 
 class SocketClient {
   private socket: Socket | null = null;

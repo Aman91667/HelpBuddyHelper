@@ -148,7 +148,7 @@ export default function ServiceRequestModal({ service, onAccept, onReject }: Ser
                   </div>
                   <div>
                     <p className="text-sm text-muted-foreground">Estimated Fare</p>
-                    <p className="text-2xl font-bold text-primary">${service.estimatedFare.toFixed(2)}</p>
+                    <p className="text-2xl font-bold text-primary">₹{service.estimatedFare.toFixed(2)}</p>
                   </div>
                 </div>
               )}

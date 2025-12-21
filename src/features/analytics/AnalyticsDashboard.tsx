@@ -97,22 +97,28 @@ export default function AnalyticsDashboard() {
     hour.count > (max.count || 0) ? hour : max, { hour: 0, count: 0 }
   );
 
+  // Calculate trends from actual data
+  const earningsTrend = earningsTrends.length > 1 
+    ? ((earningsTrends[earningsTrends.length - 1]?.earnings || 0) - (earningsTrends[0]?.earnings || 0)) / Math.max(earningsTrends[0]?.earnings || 1, 1) * 100
+    : 0;
+  const ratingTrend = ratingStats?.averageRating ? ratingStats.averageRating.toFixed(1) : '0.0';
+
   const summaryCards = [
     {
       title: 'Total Earnings',
-      value: `$${totalEarnings.toFixed(2)}`,
+      value: `₹${totalEarnings.toFixed(2)}`,
       icon: DollarSign,
       color: 'text-emerald-500',
       bgColor: 'bg-emerald-50',
-      trend: '+12.5%',
+      trend: earningsTrend >= 0 ? `+${earningsTrend.toFixed(1)}%` : `${earningsTrend.toFixed(1)}%`,
     },
     {
       title: 'Average Rating',
-      value: avgRating.toFixed(1),
+      value: ratingTrend,
       icon: Star,
       color: 'text-yellow-500',
       bgColor: 'bg-yellow-50',
-      trend: '+0.3',
+      trend: `${totalServices} services`,
     },
     {
       title: 'Total Services',
@@ -120,7 +126,7 @@ export default function AnalyticsDashboard() {
       icon: Activity,
       color: 'text-blue-500',
       bgColor: 'bg-blue-50',
-      trend: '+8',
+      trend: 'Completed',
     },
     {
       title: 'Peak Hour',

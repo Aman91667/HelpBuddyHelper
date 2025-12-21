@@ -462,6 +462,31 @@ export default function JobsPage() {
               <p className="text-sm text-purple-800 mb-4">
                 Ask the patient for the 6-digit OTP code displayed on their screen to begin the service
               </p>
+              {/* Display OTP if available */}
+              {service.otpCode && (
+                <div className="mb-4 p-4 rounded-xl bg-gradient-to-r from-purple-500 to-pink-500 text-white shadow-lg">
+                  <div className="text-sm font-medium mb-2 flex items-center gap-2">
+                    <AlertCircle className="w-4 h-4" />
+                    OTP Code (from Patient)
+                  </div>
+                  <div className="flex items-center justify-between bg-white/20 rounded-lg p-3 backdrop-blur">
+                    <div className="font-mono text-3xl font-bold tracking-widest">
+                      {service.otpCode}
+                    </div>
+                    <Button
+                      size="sm"
+                      variant="ghost"
+                      className="text-white hover:bg-white/20"
+                      onClick={() => {
+                        navigator.clipboard.writeText(service.otpCode!);
+                        toast({ title: 'OTP copied!', variant: 'default' });
+                      }}
+                    >
+                      Copy
+                    </Button>
+                  </div>
+                </div>
+              )}
               <div className="flex gap-3 mb-3">
                 <Input
                   type="text"

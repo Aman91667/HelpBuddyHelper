@@ -9,10 +9,14 @@ import { useToast } from '@/hooks/use-toast';
 interface HistoryItem {
   id: string;
   patientUser?: { name?: string };
+  patient?: { name?: string };
   serviceType: string | string[];
-  finalFare?: number;
+  fare?: number;
+  finalFare?: number; // Keep for backward compatibility
   patientRating?: number;
+  rating?: number;
   createdAt: string;
+  requestedAt?: string;
   status: string;
 }
 
@@ -97,7 +101,7 @@ export default function HistoryPage() {
                         </div>
                         <div>
                           <p className="font-semibold text-base">
-                            {item.patientUser?.name || 'Patient'}
+                            {item.patientUser?.name || item.patient?.name || 'Patient'}
                           </p>
                           <p className="text-sm text-muted-foreground">
                             {Array.isArray(item.serviceType) 
@@ -119,23 +123,23 @@ export default function HistoryPage() {
 
                     <div className="flex items-center justify-between pt-3 border-t border-border">
                       <div className="flex items-center gap-4">
-                        {item.patientRating && (
+                        {(item.patientRating || item.rating) && (
                           <div className="flex items-center gap-1">
                             <Star className="w-4 h-4 fill-warning text-warning" />
-                            <span className="text-sm font-medium">{item.patientRating}.0</span>
+                            <span className="text-sm font-medium">{(item.patientRating || item.rating)?.toFixed(1)}</span>
                           </div>
                         )}
                         <div className="flex items-center gap-1 text-muted-foreground">
                           <Clock className="w-4 h-4" />
                           <span className="text-sm">
-                            {new Date(item.createdAt).toLocaleDateString()}
+                            {new Date(item.requestedAt || item.createdAt).toLocaleDateString()}
                           </span>
                         </div>
                       </div>
                       <div className="flex items-center gap-1">
                         <span className="text-sm text-muted-foreground">₹</span>
                         <span className="text-lg font-bold text-success">
-                          {item.finalFare?.toFixed(2) || '0.00'}
+                          {(item.fare || item.finalFare)?.toFixed(2) || '0.00'}
                         </span>
                       </div>
                     </div>

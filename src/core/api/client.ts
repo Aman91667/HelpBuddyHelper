@@ -3,7 +3,7 @@
 // production, allow an explicit VITE_API_URL to override the base.
 const API_URL = (import.meta.env.DEV)
   ? '/api'
-  : (import.meta.env.VITE_API_URL || '/api');
+  : (import.meta.env.VITE_API_URL || 'https://helpbuddyback.onrender.com/api');
 
 interface ApiResponse<T = any> {
   success: boolean;
