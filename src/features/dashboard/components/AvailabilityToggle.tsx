@@ -5,6 +5,7 @@ import { useAuth } from '@/features/auth';
 import { Card, CardContent } from '@/components/ui/card';
 import { Switch } from '@/components/ui/switch';
 import { apiClient } from '@/core/api/client';
+import { socketClient } from '@/core/socket/client';
 import { useToast } from '@/hooks/use-toast';
 import { Power, MapPin } from 'lucide-react';
 
@@ -61,6 +62,16 @@ export default function AvailabilityToggle({ className = '' }: { className?: str
 
       if (response?.success && response.data) {
         updateHelper(response.data as any);
+
+        // Notify realtime server that availability changed so helper receives requests immediately
+        try {
+          if (response.data?.id) {
+            socketClient.emit('helper:availability:update', { helperId: response.data.id, isAvailable: newStatus });
+            console.debug('[AvailabilityToggle] Emitted helper:availability:update');
+          }
+        } catch (e) {
+          // ignore
+        }
 
         toast({
           title: newStatus ? "You're Online!" : "You're Offline",
