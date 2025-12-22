@@ -65,7 +65,7 @@ export default function HistoryPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gradient-to-b from-background via-muted/20 to-background pb-24 flex items-center justify-center">
+      <div className="min-h-screen bg-gradient-to-b from-background via-muted/20 to-background pb-24 pb-safe flex items-center justify-center">
         <Loader2 className="w-12 h-12 animate-spin text-primary" />
       </div>
     );

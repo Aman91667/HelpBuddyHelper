@@ -216,7 +216,7 @@ export default function ProfilePage() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-background via-muted/10 to-background pb-24">
+    <div className="min-h-screen bg-gradient-to-b from-background via-muted/10 to-background pb-24 pb-safe">
       <div className="max-w-6xl mx-auto p-6 space-y-6">
         <motion.header initial={{ opacity: 0, y: -12 }} animate={{ opacity: 1, y: 0 }}>
           <h1 className="text-3xl font-extrabold tracking-tight mb-1">Profile</h1>

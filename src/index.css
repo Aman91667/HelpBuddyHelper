@@ -70,6 +70,12 @@
     --sidebar-ring: 142 55% 45%;
   }
 
+  /* Layout sizing for viewport-aware maps and safe padding */
+  :root {
+    --app-header-height: 64px;
+    --app-bottom-height: 80px;
+  }
+
   /* === Dark Mode tuned to a forest green depth === */
   .dark {
     --background: 160 25% 12%;
@@ -165,6 +171,11 @@
   
   .gradient-premium {
     background: var(--gradient-premium);
+  }
+
+  /* safe padding helper: adds bottom padding equal to bottom nav + safe-area inset */
+  .pb-safe {
+    padding-bottom: calc(var(--app-bottom-height, 80px) + env(safe-area-inset-bottom, 12px));
   }
 
   .shadow-glow {

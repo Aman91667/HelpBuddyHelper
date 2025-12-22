@@ -16,7 +16,7 @@ const JobsPage = lazy(() => import('@/features/jobs/pages/JobsPage'));
 const PaymentReceivingPage = lazy(() => import('@/features/payment/pages/PaymentReceivingPage'));
 
 const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
-  const { isAuthenticated, isLoading } = useAuth();
+  const { isAuthenticated, isLoading, helper } = useAuth();
 
   if (isLoading) {
     return <Loader fullScreen />;
@@ -24,6 +24,12 @@ const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
 
   if (!isAuthenticated) {
     return <Navigate to="/auth" replace />;
+  }
+
+  // If the user is authenticated but hasn't completed helper onboarding,
+  // redirect them to the onboarding flow instead of allowing access.
+  if (!helper) {
+    return <Navigate to="/auth/helper" replace />;
   }
 
   return (

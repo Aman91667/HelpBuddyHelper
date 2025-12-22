@@ -91,7 +91,7 @@ function MobileLayout({ navigate }: { navigate: (path: string) => void }) {
   ];
 
   return (
-    <div className="min-h-screen overflow-x-hidden bg-gradient-to-b from-[#e8f6ef] via-[#f3faf6] to-[#e1f3e9] text-gray-800">
+    <div className="min-h-screen overflow-x-hidden bg-gradient-to-b from-[#e8f6ef] via-[#f3faf6] to-[#e1f3e9] text-gray-800 pb-safe">
       <header className="sticky top-0 z-40 bg-white/95 backdrop-blur border-b border-emerald-100 p-3">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">

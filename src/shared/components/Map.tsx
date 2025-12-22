@@ -118,12 +118,17 @@ export const Map = ({
 
   const centerPos: [number, number] = [center.lat, center.lng];
 
+  const resolvedHeight =
+    height === 'calc-vh'
+      ? `calc(100vh - var(--app-header-height,64px) - var(--app-bottom-height,88px))`
+      : height;
+
   return (
     <div
       className={`w-full rounded-2xl border border-border bg-card shadow-lg overflow-hidden ${
         disabled ? 'pointer-events-none opacity-50' : ''
       } ${className}`}
-      style={{ height }}
+      style={{ height: resolvedHeight }}
     >
       <MapContainer
         center={centerPos}

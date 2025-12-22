@@ -12,7 +12,7 @@ interface PremiumPageProps {
 // consistent without forcing a strict layout.
 export const PremiumPage: React.FC<PremiumPageProps> = ({ title, subtitle, headerExtra, children }) => {
   return (
-    <div className="min-h-screen bg-gradient-to-b from-background via-muted/20 to-background pb-24">
+    <div className="min-h-screen bg-gradient-to-b from-background via-muted/20 to-background pb-24 pb-safe">
       <div className="max-w-6xl mx-auto p-6 space-y-6">
         {(title || subtitle || headerExtra) && (
           <div className="flex items-start justify-between gap-4">
