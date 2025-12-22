@@ -1,11 +1,11 @@
-import { Home, DollarSign, History, User } from 'lucide-react';
+import { Home, IndianRupee, History, User } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { NavLink } from '@/components/layout/NavLink';
 
 export const BottomNav = () => {
   const navItems = [
     { path: '/dashboard', icon: Home, label: 'Home' },
-    { path: '/earnings', icon: DollarSign, label: 'Earnings' },
+    { path: '/earnings', icon: IndianRupee, label: 'Earnings' },
     { path: '/history', icon: History, label: 'History' },
     { path: '/profile', icon: User, label: 'Profile' },
   ];

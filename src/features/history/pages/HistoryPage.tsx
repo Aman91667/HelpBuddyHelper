@@ -14,7 +14,7 @@ interface HistoryItem {
   fare?: number;
   finalFare?: number; // Keep for backward compatibility
   patientRating?: number;
-  rating?: number;
+  rating?: number | { patientRating?: number; helperRating?: number };
   createdAt: string;
   requestedAt?: string;
   status: string;
@@ -30,20 +30,31 @@ export default function HistoryPage() {
       try {
         const response = await apiClient.getServiceHistory();
         if (response.success && response.data) {
-          setHistory(response.data as HistoryItem[]);
+          // Handle both array format and object with services array
+          const data = response.data as any;
+          if (Array.isArray(data)) {
+            setHistory(data as HistoryItem[]);
+          } else if (data.services && Array.isArray(data.services)) {
+            setHistory(data.services as HistoryItem[]);
+          } else {
+            setHistory([]);
+          }
         } else {
           toast({
             title: 'Error',
-            description: 'Failed to load service history',
+            description: response.error || 'Failed to load service history',
             variant: 'destructive',
           });
+          setHistory([]);
         }
-      } catch (error) {
+      } catch (error: any) {
+        console.error('History fetch error:', error);
         toast({
           title: 'Error',
-          description: 'Failed to load service history',
+          description: error?.message || 'Failed to load service history',
           variant: 'destructive',
         });
+        setHistory([]);
       } finally {
         setLoading(false);
       }
@@ -123,12 +134,25 @@ export default function HistoryPage() {
 
                     <div className="flex items-center justify-between pt-3 border-t border-border">
                       <div className="flex items-center gap-4">
-                        {(item.patientRating || item.rating) && (
-                          <div className="flex items-center gap-1">
-                            <Star className="w-4 h-4 fill-warning text-warning" />
-                            <span className="text-sm font-medium">{(item.patientRating || item.rating)?.toFixed(1)}</span>
-                          </div>
-                        )}
+                        {(() => {
+                          // Get patient rating (helper sees what patient rated them)
+                          let ratingValue: number | null = null;
+                          if (item.patientRating) {
+                            ratingValue = typeof item.patientRating === 'number' ? item.patientRating : parseFloat(String(item.patientRating));
+                          } else if (item.rating) {
+                            if (typeof item.rating === 'number') {
+                              ratingValue = item.rating;
+                            } else if (typeof item.rating === 'object' && item.rating.patientRating) {
+                              ratingValue = typeof item.rating.patientRating === 'number' ? item.rating.patientRating : parseFloat(String(item.rating.patientRating));
+                            }
+                          }
+                          return ratingValue && ratingValue > 0 ? (
+                            <div className="flex items-center gap-1">
+                              <Star className="w-4 h-4 fill-warning text-warning" />
+                              <span className="text-sm font-medium">{ratingValue.toFixed(1)}</span>
+                            </div>
+                          ) : null;
+                        })()}
                         <div className="flex items-center gap-1 text-muted-foreground">
                           <Clock className="w-4 h-4" />
                           <span className="text-sm">

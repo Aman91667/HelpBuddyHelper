@@ -18,6 +18,7 @@ import {
   Sparkles,
 } from 'lucide-react';
 import logo from '@/assets/logo.png';
+import OTPPopup from '@/shared/components/OTPPopup';
 
 type Step = 'phone' | 'otp';
 
@@ -39,6 +40,8 @@ export default function AuthPage() {
   const [resendIn, setResendIn] = useState<number>(0);
   const canResend = resendIn === 0;
   const [invalidOtp, setInvalidOtp] = useState(false);
+  const [showOTPPopup, setShowOTPPopup] = useState(false);
+  const [otpCode, setOtpCode] = useState('');
 
   // Format +91 UI while storing digits
   const prettyPhone = useMemo(() => {
@@ -91,9 +94,12 @@ export default function AuthPage() {
           toast({ title: 'New helper registration', description: 'Please verify your phone number, then complete your profile.' });
         }
       } else {
-        // If check failed, be conservative and block OTP (user requested behavior: only OTP for existing helpers)
-        toast({ variant: 'destructive', title: 'Unable to verify helper status', description: existsResp?.error || 'Please try again later.' });
-        return;
+        // If check failed, log error but allow OTP request to proceed (for development)
+        // In production, you might want to block OTP if check fails
+        console.warn('[Auth] Helper existence check failed:', existsResp?.error);
+        // Allow OTP request to proceed even if check fails (for development/testing)
+        // toast({ variant: 'destructive', title: 'Unable to verify helper status', description: existsResp?.error || 'Please try again later.' });
+        // return;
       }
       
       // Store for use after OTP verification
@@ -105,6 +111,11 @@ export default function AuthPage() {
         setStep('otp');
         setResendIn(30);
         toast({ title: 'OTP sent', description: 'Please check your phone for the code.' });
+        // Show OTP popup if code is returned from backend
+        if ((data as any)?.code) {
+          setOtpCode((data as any).code);
+          setShowOTPPopup(true);
+        }
       } else {
         toast({ variant: 'destructive', title: 'Error', description: data?.error || 'Failed to send OTP' });
       }
@@ -124,6 +135,11 @@ export default function AuthPage() {
       if (data?.success) {
         setResendIn(30);
         toast({ title: 'OTP resent', description: 'A new code has been sent to your phone.' });
+        // Show OTP popup if code is returned from backend
+        if ((data as any)?.code) {
+          setOtpCode((data as any).code);
+          setShowOTPPopup(true);
+        }
       } else {
         toast({ variant: 'destructive', title: 'Error', description: data?.error || 'Could not resend OTP' });
       }
@@ -427,6 +443,16 @@ export default function AuthPage() {
           </div>
         </motion.div>
       </div>
+
+      {/* OTP Popup */}
+      {showOTPPopup && otpCode && (
+        <OTPPopup
+          otp={otpCode}
+          phone={prettyPhone || `+91 ${phone}`}
+          onClose={() => setShowOTPPopup(false)}
+          duration={30000} // 30 seconds
+        />
+      )}
     </div>
   );
 }

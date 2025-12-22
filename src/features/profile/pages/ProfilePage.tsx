@@ -264,7 +264,10 @@ export default function ProfilePage() {
                     <div className="flex items-center gap-3 mt-3">
                       <div className="inline-flex items-center gap-1 px-2 py-1 rounded-full bg-success/10 text-success text-sm font-medium">
                         <Star className="w-4 h-4" />
-                        <span>{((helper?.rating ?? 5) as number).toFixed(1)}</span>
+                        <span>{((helper as any)?.avgRating ?? helper?.rating ?? 0).toFixed(1)}</span>
+                        {(helper as any)?.totalRatings && (
+                          <span className="text-xs ml-1">({(helper as any).totalRatings})</span>
+                        )}
                       </div>
 
                       <div className="text-sm text-muted-foreground">
@@ -296,8 +299,10 @@ export default function ProfilePage() {
                     </div>
 
                     <div>
-                      <p className="text-lg font-semibold">{((helper?.rating ?? 5) as number).toFixed(1)}</p>
-                      <p className="text-xs text-muted-foreground mt-0.5">Rating</p>
+                      <p className="text-lg font-semibold">{((helper as any)?.avgRating ?? helper?.rating ?? 0).toFixed(1)}</p>
+                      <p className="text-xs text-muted-foreground mt-0.5">
+                        Rating{(helper as any)?.totalRatings ? ` (${(helper as any).totalRatings})` : ''}
+                      </p>
                     </div>
                   </div>
                 </div>

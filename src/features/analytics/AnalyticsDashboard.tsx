@@ -251,7 +251,7 @@ export default function AnalyticsDashboard() {
                     strokeWidth={3}
                     dot={{ fill: '#10b981', r: 4 }}
                     activeDot={{ r: 6 }}
-                    name="Earnings ($)"
+                    name="Earnings (₹)"
                   />
                 </LineChart>
               </ResponsiveContainer>

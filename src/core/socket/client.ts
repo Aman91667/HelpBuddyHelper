@@ -78,6 +78,22 @@ class SocketClient {
 
     this.socket.on('connect', () => {
       this.reconnectAttempts = 0;
+      console.debug('[HELPER-WS] Connected to server');
+
+      // Join user room for receiving service requests
+      const userId = tokenToUse ? (() => {
+        try {
+          const payload = JSON.parse(atob(tokenToUse.split('.')[1]));
+          return payload.userId || payload.sub;
+        } catch {
+          return null;
+        }
+      })() : null;
+      
+      if (userId && this.socket) {
+        this.socket.emit('join:user', { userId });
+        console.debug('[HELPER-WS] Joined user room:', userId);
+      }
 
       const serviceId = localStorage.getItem('activeServiceId');
       if (serviceId) {
