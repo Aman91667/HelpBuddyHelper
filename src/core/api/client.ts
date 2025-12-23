@@ -351,6 +351,10 @@ class ApiClient {
     return this.request('/helpers/earnings');
   }
 
+  async getHelperHoursOnline() {
+    return this.request<any>('GET', '/analytics/helper/hours-online');
+  }
+
   // Ratings
   async rateService(serviceId: string, rating: number, comment?: string) {
     return this.request(`/services/${serviceId}/rate`, {

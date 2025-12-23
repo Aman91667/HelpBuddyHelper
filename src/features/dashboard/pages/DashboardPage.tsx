@@ -56,6 +56,8 @@ export default function DashboardPage() {
   const [isAccepting, setIsAccepting] = useState(false);
   const [totalJobs, setTotalJobs] = useState<number>(0);
   const [loadingStats, setLoadingStats] = useState(true);
+  const [hoursOnline, setHoursOnline] = useState<number | null>(null);
+  const [loadingHours, setLoadingHours] = useState(true);
   const navigate = useNavigate();
 
   // Poll for active service
@@ -88,6 +90,21 @@ export default function DashboardPage() {
     }
   }, []);
 
+  // Fetch hours online (today by default)
+  const fetchHoursOnline = useCallback(async () => {
+    try {
+      setLoadingHours(true);
+      const resp = await apiClient.getHelperHoursOnline();
+      if (resp && resp.success && resp.data) {
+        setHoursOnline(resp.data.hours);
+      }
+    } catch (err) {
+      console.error('Failed to fetch hours online', err);
+    } finally {
+      setLoadingHours(false);
+    }
+  }, []);
+
   useEffect(() => {
     socketClient.on('connect', () => setSocketConnected(true));
     socketClient.on('disconnect', () => setSocketConnected(false));
@@ -102,6 +119,7 @@ export default function DashboardPage() {
   useEffect(() => {
     if (helper?.id) {
       fetchTotalJobs();
+      fetchHoursOnline();
     }
   }, [helper?.id, fetchTotalJobs]);
 
@@ -249,10 +267,16 @@ export default function DashboardPage() {
     }
   }, [pendingRequest]);
 
+  const formatHours = (h: number) => {
+    if (h >= 1) return `${h} h`;
+    const mins = Math.round(h * 60);
+    return `${mins} m`;
+  };
+
   const stats = [
     { label: 'Rating', value: helper?.rating?.toFixed(1) || '—', icon: Star },
     { label: 'Total Jobs', value: loadingStats ? '...' : totalJobs.toString(), icon: TrendingUp },
-    { label: 'Hours Online', value: '—', icon: Clock },
+    { label: 'Hours Online', value: loadingHours ? '...' : (hoursOnline !== null ? formatHours(hoursOnline) : '—'), icon: Clock },
     { label: 'Active', value: helper?.isAvailable ? 'Yes' : 'No', icon: Award },
   ];
 
@@ -294,7 +318,7 @@ export default function DashboardPage() {
                 <div key={s.label} className="p-3 rounded-xl bg-white/60 border border-white/10">
                   <div className="flex items-start justify-between">
                     <div>
-                      <p className="text-xs text-muted-foreground">{s.label}</p>
+                      <p className="text-xs text-muted-foreground pl-1 whitespace-nowrap">{s.label}</p>
                       <p className="text-xl font-semibold">{s.value}</p>
                     </div>
                     <s.icon className="w-5 h-5 text-muted-foreground" />
@@ -339,7 +363,7 @@ export default function DashboardPage() {
                 <motion.div key={stat.label} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="p-4 rounded-xl bg-gradient-to-br from-white/60 to-white/40 border border-white/10 shadow-sm">
                   <div className="flex items-center justify-between">
                     <div>
-                      <p className="text-xs text-muted-foreground">{stat.label}</p>
+                      <p className="text-xs text-muted-foreground pl-1 whitespace-nowrap">{stat.label}</p>
                       <p className="text-2xl font-bold">{stat.value}</p>
                     </div>
                     <stat.icon className="w-6 h-6 text-muted-foreground" />
