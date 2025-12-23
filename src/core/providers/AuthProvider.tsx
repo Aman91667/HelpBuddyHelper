@@ -230,8 +230,18 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           setHelper(null);
         }
 
-  // Socket connection is handled centrally by SocketProvider; avoid connecting here to prevent duplicates
-      } else {
+        // Ensure socket is connected when auth succeeds (e.g., on page reload)
+        try {
+          const tk = localStorage.getItem('accessToken');
+          if (tk) {
+            const { socketClient } = await import('@/core/socket/client');
+            socketClient.connect(tk);
+          }
+        } catch (e) {
+          // ignore
+        }
+
+      } else { 
         const ok = await attemptRefresh();
         if (!ok) {
           localStorage.removeItem('accessToken');
@@ -275,7 +285,16 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     } catch (e) {
       // ignore
     }
-    
+
+    // Ensure socket connects immediately after login so realtime status is accurate
+    try {
+      // dynamic import of socket client to avoid circular deps
+      const { socketClient } = await import('@/core/socket/client');
+      socketClient.connect(accessToken);
+    } catch (e) {
+      // ignore
+    }
+
     await checkAuth();
   };
 

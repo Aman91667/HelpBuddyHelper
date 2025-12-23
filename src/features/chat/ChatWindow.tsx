@@ -199,11 +199,11 @@ export const ChatWindow: React.FC<ChatWindowProps> = ({ serviceId, patientName, 
             className={`rounded-2xl px-4 py-2 ${
               isSentByMe
                 ? 'bg-gradient-to-r from-emerald-500 to-green-500 text-white'
-                : 'bg-slate-100 text-black'
+                : 'bg-slate-100 text-slate-900 dark:bg-slate-800 dark:text-slate-100'
             }`}
           >
             {message.messageType === 'TEXT' && message.message && (
-              <p className={`text-sm break-words ${isSentByMe ? 'text-white' : 'text-black'}`}>{message.message}</p>
+              <p className={`text-sm break-words ${isSentByMe ? 'text-white' : 'text-slate-900 dark:text-slate-100'}`}>{message.message}</p>
             )}
             {message.messageType === 'IMAGE' && message.fileUrl && (
               <div className="space-y-2">
