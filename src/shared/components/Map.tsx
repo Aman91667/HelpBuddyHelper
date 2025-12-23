@@ -118,10 +118,19 @@ export const Map = ({
 
   const centerPos: [number, number] = [center.lat, center.lng];
 
-  const resolvedHeight =
+  let resolvedHeight =
     height === 'calc-vh'
       ? `calc(100vh - var(--app-header-height,64px) - var(--app-bottom-height,88px))`
       : height;
+
+  // Use a compact height on small screens to avoid the map overlapping other UI elements
+  if (typeof window !== 'undefined' && window.innerWidth < 640) {
+    if (height === 'calc-vh') {
+      resolvedHeight = `calc(60vh - var(--app-header-height,64px))`;
+    } else {
+      resolvedHeight = '50vh';
+    }
+  }
 
   return (
     <div

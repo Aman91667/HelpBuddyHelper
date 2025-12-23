@@ -152,6 +152,11 @@ export default function DashboardPage() {
     
     setIsAccepting(true);
     try {
+      // Ensure realtime socket is connected when accepting so we receive updates immediately
+      if (!socketClient.isConnected()) {
+        socketClient.connect();
+      }
+
       const serviceId = pendingRequest.id;
       const response = await apiClient.acceptService(serviceId);
       if (response.success) {

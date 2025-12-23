@@ -66,8 +66,26 @@ export default function AvailabilityToggle({ className = '' }: { className?: str
         // Notify realtime server that availability changed so helper receives requests immediately
         try {
           if (response.data?.id) {
-            socketClient.emit('helper:availability:update', { helperId: response.data.id, isAvailable: newStatus });
-            console.debug('[AvailabilityToggle] Emitted helper:availability:update');
+            // If socket is not connected and we just turned on availability, try to connect first
+            if (newStatus && !socketClient.isConnected()) {
+              socketClient.connect();
+              let attempts = 0;
+              const emitWhenReady = () => {
+                attempts += 1;
+                if (socketClient.isConnected()) {
+                  socketClient.emit('helper:availability:update', { helperId: response.data.id, isAvailable: newStatus });
+                  console.debug('[AvailabilityToggle] Emitted helper:availability:update after connect');
+                } else if (attempts < 10) {
+                  setTimeout(emitWhenReady, 300);
+                } else {
+                  console.warn('[AvailabilityToggle] Could not emit availability:update, socket failed to connect');
+                }
+              };
+              emitWhenReady();
+            } else {
+              socketClient.emit('helper:availability:update', { helperId: response.data.id, isAvailable: newStatus });
+              console.debug('[AvailabilityToggle] Emitted helper:availability:update');
+            }
           }
         } catch (e) {
           // ignore
