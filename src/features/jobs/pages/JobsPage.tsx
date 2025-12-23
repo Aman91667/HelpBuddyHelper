@@ -438,7 +438,7 @@ export default function JobsPage() {
                 zoom={17}
                 disabled={showRatingModal || showChat}
                 fitToMarkers
-                className="bg-muted/40 dark:bg-slate-900/40"
+                className="bg-muted/40 dark:bg-slate-900/40 map-fixed"
               />
             ) : (
               <div className="h-[400px] flex items-center justify-center bg-muted rounded-xl">

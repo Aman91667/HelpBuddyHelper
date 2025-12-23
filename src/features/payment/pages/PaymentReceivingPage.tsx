@@ -10,6 +10,7 @@ import { CheckCircle2, Clock, Loader2, ArrowLeft, IndianRupee } from 'lucide-rea
 import { useToast } from '@/hooks/use-toast';
 import EarningsBreakdown from '@/features/jobs/components/EarningsBreakdown';
 import PremiumPage from '@/components/layout/PremiumPage';
+import { RatingModal } from '@/shared/components';
 
 export default function PaymentReceivingPage() {
   const { serviceId } = useParams<{ serviceId: string }>();
@@ -18,6 +19,7 @@ export default function PaymentReceivingPage() {
   const [service, setService] = useState<Service | null>(null);
   const [loading, setLoading] = useState(true);
   const [paymentStatus, setPaymentStatus] = useState<'PENDING' | 'COMPLETED' | 'FAILED'>('PENDING');
+  const [showRatingModal, setShowRatingModal] = useState(false);
 
   useEffect(() => {
     if (!serviceId) return;
@@ -32,6 +34,8 @@ export default function PaymentReceivingPage() {
           description: `Patient paid via ${data.paymentMethod || 'Cash'}`,
         });
         fetchServiceDetails();
+        // Prompt helper to leave a rating
+        setTimeout(() => setShowRatingModal(true), 800);
       }
     };
 
@@ -130,12 +134,21 @@ export default function PaymentReceivingPage() {
                       </p>
                     )}
                   </div>
-                  <Button
-                    onClick={() => navigate('/dashboard')}
-                    className="w-full bg-emerald-600 hover:bg-emerald-700"
-                  >
-                    Back to Dashboard
-                  </Button>
+                  <div className="flex gap-3">
+                    <Button
+                      onClick={() => setShowRatingModal(true)}
+                      variant="outline"
+                      className="flex-1"
+                    >
+                      Rate Patient
+                    </Button>
+                    <Button
+                      onClick={() => navigate('/dashboard')}
+                      className="flex-1 bg-emerald-600 hover:bg-emerald-700 text-white"
+                    >
+                      Back to Dashboard
+                    </Button>
+                  </div>
                 </div>
               ) : (
                 <div className="space-y-3">
@@ -177,6 +190,29 @@ export default function PaymentReceivingPage() {
         {service.status === 'COMPLETED' && (
           <EarningsBreakdown service={service} />
         )}
+
+        {/* Rating Modal */}
+        <RatingModal
+          isOpen={showRatingModal}
+          personName={(service as any).patient?.name || 'Patient'}
+          personType="patient"
+          onClose={() => setShowRatingModal(false)}
+          onSubmit={async (rating: number, comment: string) => {
+            if (!serviceId) return;
+            try {
+              const resp = await apiClient.rateService(serviceId, rating, comment);
+              if (resp.success) {
+                toast({ title: 'Rating submitted', description: 'Thank you for rating the patient' });
+                setShowRatingModal(false);
+                fetchServiceDetails();
+              } else {
+                toast({ title: 'Failed', description: resp.error || 'Could not submit rating', variant: 'destructive' });
+              }
+            } catch (err) {
+              toast({ title: 'Error', description: 'Failed to submit rating', variant: 'destructive' });
+            }
+          }}
+        />
 
         {/* Service Summary */}
         <Card>

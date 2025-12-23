@@ -3,15 +3,25 @@ import { io, Socket } from 'socket.io-client';
 class ChatSocketClient {
   private socket: Socket | null = null;
   private serviceId: string | null = null;
+  private listeners: Map<string, Set<(...args: any[]) => void>> = new Map();
 
   connect(token: string) {
     if (this.socket?.connected) {
       return this.socket;
     }
 
-    this.socket = io('http://localhost:3000/chat', {
+    const apiUrl = import.meta.env.VITE_API_URL ? new URL(import.meta.env.VITE_API_URL).origin : window.location.origin;
+    this.socket = io(`${apiUrl}/chat`, {
       auth: { token },
       transports: ['websocket', 'polling'],
+    });
+
+    // Attach pre-registered listeners
+    this.listeners.forEach((callbacks, event) => {
+      callbacks.forEach((cb) => {
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-call
+        this.socket?.on(event, cb);
+      });
     });
 
     this.socket.on('connect', () => {
@@ -57,8 +67,8 @@ class ChatSocketClient {
 
   sendMessage(data: {
     serviceId: string;
-    senderId: string;
-    senderType: 'PATIENT' | 'HELPER';
+    senderId?: string;
+    senderType?: 'PATIENT' | 'HELPER';
     messageType: 'TEXT' | 'IMAGE' | 'FILE' | 'VOICE' | 'TEMPLATE';
     message?: string;
     fileUrl?: string;
@@ -69,52 +79,70 @@ class ChatSocketClient {
       return;
     }
 
-    this.socket.emit('send:message', data);
+    const payload = {
+      ...data,
+      senderId: data.senderId || localStorage.getItem('userId') || undefined,
+      senderType: data.senderType || 'HELPER',
+    } as any;
+
+    this.socket.emit('send:message', payload);
+  }
+
+  private _registerListener(event: string, callback: (...args: any[]) => void) {
+    if (!this.listeners.has(event)) this.listeners.set(event, new Set());
+    const set = this.listeners.get(event)!;
+    if (set.has(callback)) return;
+    set.add(callback);
+    if (this.socket) this.socket.on(event, callback);
   }
 
   onNewMessage(callback: (message: any) => void) {
-    if (!this.socket) return;
-    this.socket.on('message:received', callback);
+    this._registerListener('message:received', callback);
   }
 
   onMessageRead(callback: (data: any) => void) {
-    if (!this.socket) return;
-    this.socket.on('message:read', callback);
+    this._registerListener('message:read', callback);
   }
 
   onMessagesRead(callback: (data: any) => void) {
-    if (!this.socket) return;
-    this.socket.on('messages:read', callback);
+    this._registerListener('messages:read', callback);
   }
 
   emitMarkAsRead(serviceId: string, userId: string) {
-    if (!this.socket) return;
+    if (!this.socket) {
+      console.warn('[ChatSocket] Socket not connected');
+      return;
+    }
     this.socket.emit('messages:mark-read', { serviceId, userId });
   }
 
   onTypingStart(callback: (data: { senderId: string }) => void) {
-    if (!this.socket) return;
-    this.socket.on('user:typing', (data: { userId: string }) => {
+    this._registerListener('user:typing', (data: { userId: string }) => {
       callback({ senderId: data.userId });
     });
   }
 
   onTypingStop(callback: (data: { senderId: string }) => void) {
-    if (!this.socket) return;
-    this.socket.on('user:stopped-typing', (data: { userId: string }) => {
+    this._registerListener('user:stopped-typing', (data: { userId: string }) => {
       callback({ senderId: data.userId });
     });
   }
 
   emitTypingStart(serviceId: string) {
-    if (!this.socket) return;
+    if (!this.socket) {
+      console.warn('[ChatSocket] Socket not connected');
+      return;
+    }
     const userId = localStorage.getItem('userId') || '';
     const userType = 'HELPER';
     this.socket.emit('typing:start', { serviceId, userId, userType });
   }
 
   emitTypingStop(serviceId: string) {
-    if (!this.socket) return;
+    if (!this.socket) {
+      console.warn('[ChatSocket] Socket not connected');
+      return;
+    }
     const userId = localStorage.getItem('userId') || '';
     this.socket.emit('typing:stop', { serviceId, userId });
   }
@@ -125,6 +153,7 @@ class ChatSocketClient {
       this.socket.disconnect();
       this.socket = null;
     }
+    this.listeners.clear();
   }
 
   getSocket() {
