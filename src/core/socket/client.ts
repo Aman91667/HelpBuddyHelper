@@ -139,6 +139,34 @@ class SocketClient {
     // Handle whoami response
     this.socket.on('whoami', (data: { userId?: string }) => {
       console.debug('[HELPER-WS] whoami response:', data);
+
+      // If gateway resolved us as an anonymous socket, attempt an in-place auth update
+      // using any valid access token we have in localStorage. This fixes cases where
+      // handshake-time verification failed (e.g., expired token) but a valid token is
+      // available after page load (cookie refresh or token rotation).
+      try {
+        const userId = data?.userId || '';
+        if (typeof userId === 'string' && userId.startsWith('anon:')) {
+          const token = localStorage.getItem('accessToken') || localStorage.getItem('token') || '';
+          if (token && this.socket) {
+            // Emit auth:update once; server will respond with success and a whoami
+            // update if the token is valid. Use ack to avoid spamming retries.
+            try {
+              this.socket.emit('auth:update', { token }, (ack: any) => {
+                if (ack && ack.success) {
+                  console.debug('[HELPER-WS] auth:update succeeded, userId:', ack.userId);
+                } else {
+                  console.warn('[HELPER-WS] auth:update failed or token invalid', ack);
+                }
+              });
+            } catch (e) {
+              // ignore emit errors
+            }
+          }
+        }
+      } catch (e) {
+        // ignore errors in whoami handler
+      }
     });
 
     this.socket.on('disconnect', () => {

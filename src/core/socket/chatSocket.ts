@@ -97,7 +97,11 @@ class ChatSocketClient {
   }
 
   onNewMessage(callback: (message: any) => void) {
+    // Listen for both the service-room broadcast and the direct-to-user event.
+    // Some recipients may not be joined to the service room (e.g., when not viewing
+    // the specific service) but should still receive direct 'message:new' notifications.
     this._registerListener('message:received', callback);
+    this._registerListener('message:new', callback);
   }
 
   onMessageRead(callback: (data: any) => void) {

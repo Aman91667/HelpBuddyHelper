@@ -32,6 +32,7 @@ export const ChatWindow: React.FC<ChatWindowProps> = ({ serviceId, patientName, 
   const [loading, setLoading] = useState(true);
   const [templates, setTemplates] = useState<any[]>([]);
   const [showTemplates, setShowTemplates] = useState(false);
+  const [attachments, setAttachments] = useState<Record<string, string>>({});
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const typingTimeoutRef = useRef<number>();
   const currentUserId = localStorage.getItem('userId') || '';
@@ -112,6 +113,49 @@ export const ChatWindow: React.FC<ChatWindowProps> = ({ serviceId, patientName, 
       messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
     }, 100);
   };
+
+  // Fetch attachments securely via authenticated API and cache as blob URLs.
+  useEffect(() => {
+    const toFetch = messages.filter(m => (m.messageType === 'IMAGE' || m.messageType === 'FILE' || m.messageType === 'VOICE') && !attachments[m.id]);
+    if (toFetch.length === 0) return;
+
+    toFetch.forEach(async (m) => {
+      try {
+        const token = localStorage.getItem('accessToken');
+        const headers: Record<string, string> = {};
+        if (token) headers['Authorization'] = `Bearer ${token}`;
+        const resp = await fetch(`/api/chat/file/${m.id}`, { headers });
+        if (!resp.ok) {
+          // fallback to public fileUrl if available
+          if (m.fileUrl) {
+            setAttachments(prev => ({ ...prev, [m.id]: m.fileUrl }));
+          }
+          return;
+        }
+        const blob = await resp.blob();
+        const url = URL.createObjectURL(blob);
+        setAttachments(prev => ({ ...prev, [m.id]: url }));
+      } catch (e) {
+        if (m.fileUrl) {
+          setAttachments(prev => ({ ...prev, [m.id]: m.fileUrl }));
+        }
+      }
+    });
+
+    // cleanup to revoke object URLs when messages change/unmount
+    return () => {
+      Object.values(attachments).forEach((u) => {
+        try { URL.revokeObjectURL(u); } catch (e) { /* ignore */ }
+      });
+    };
+
+    // cleanup to revoke object URLs when messages change/unmount
+    return () => {
+      Object.values(attachments).forEach((u) => {
+        try { URL.revokeObjectURL(u); } catch (e) { /* ignore */ }
+      });
+    };
+  }, [messages]);
 
   const handleTyping = () => {
     chatSocket.emitTypingStart(serviceId);
@@ -208,7 +252,7 @@ export const ChatWindow: React.FC<ChatWindowProps> = ({ serviceId, patientName, 
             {message.messageType === 'IMAGE' && message.fileUrl && (
               <div className="space-y-2">
                 <img
-                  src={message.fileUrl}
+                  src={attachments[message.id] || message.fileUrl}
                   alt="Sent image"
                   className="rounded-lg max-w-full"
                 />
@@ -217,17 +261,44 @@ export const ChatWindow: React.FC<ChatWindowProps> = ({ serviceId, patientName, 
                 )}
               </div>
             )}
-            {message.messageType === 'FILE' && message.fileUrl && (
+            {message.messageType === 'FILE' && (attachments[message.id] || message.fileUrl) && (
               <div className="flex items-center gap-2">
                 <Paperclip className="h-4 w-4" />
-                <a
-                  href={message.fileUrl}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="text-sm underline"
+                <button
+                  onClick={async () => {
+                    try {
+                      let url = attachments[message.id];
+                      if (!url) {
+                        const token = localStorage.getItem('accessToken');
+                        const headers: Record<string, string> = {};
+                        if (token) headers['Authorization'] = `Bearer ${token}`;
+                        const resp = await fetch(`/api/chat/file/${message.id}`, { headers });
+                        if (!resp.ok) {
+                          if (message.fileUrl) {
+                            window.open(message.fileUrl, '_blank');
+                            return;
+                          }
+                          return;
+                        }
+                        const blob = await resp.blob();
+                        url = URL.createObjectURL(blob);
+                        setAttachments(prev => ({ ...prev, [message.id]: url }));
+                      }
+
+                      const a = document.createElement('a');
+                      a.href = url;
+                      a.download = message.fileName || 'file';
+                      document.body.appendChild(a);
+                      a.click();
+                      a.remove();
+                    } catch (e) {
+                      if (message.fileUrl) window.open(message.fileUrl, '_blank');
+                    }
+                  }}
+                  className="text-sm underline bg-transparent"
                 >
                   {message.fileName || 'Download file'}
-                </a>
+                </button>
               </div>
             )}
           </div>
