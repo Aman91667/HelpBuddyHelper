@@ -377,7 +377,7 @@ export default function JobsPage() {
                       size="sm"
                       variant="outline"
                       onClick={() => setShowChat(true)}
-                      className="ml-auto"
+                      className="ml-auto chat-button"
                     >
                       <MessageCircle className="w-4 h-4 mr-2" />
                       Chat
@@ -515,7 +515,7 @@ export default function JobsPage() {
               <Button
                 variant="outline"
                 onClick={() => setShowChat(true)}
-                className="w-full"
+                className="w-full chat-button"
               >
                 <MessageCircle className="w-4 h-4 mr-2" />
                 Chat with Patient
@@ -558,7 +558,7 @@ export default function JobsPage() {
                 <Button
                   variant="outline"
                   onClick={() => setShowChat(true)}
-                  className="flex-1"
+                  className="flex-1 chat-button"
                 >
                   <MessageCircle className="w-4 h-4 mr-2" />
                   Chat with Patient
@@ -602,7 +602,7 @@ export default function JobsPage() {
                 <Button
                   variant="outline"
                   onClick={() => setShowChat(true)}
-                  className="flex-1"
+                  className="flex-1 chat-button"
                 >
                   <MessageCircle className="w-4 h-4 mr-2" />
                   Chat with Patient

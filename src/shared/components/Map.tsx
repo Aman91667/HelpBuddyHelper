@@ -4,6 +4,13 @@ import { MapContainer, TileLayer, Marker, Popup, useMap } from 'react-leaflet';
 import type { LocationUpdate as Location } from '@/types';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
+// Leaflet markercluster plugin (spiderfy) and styles
+// @ts-ignore
+import 'leaflet.markercluster/dist/MarkerCluster.css';
+// @ts-ignore
+import 'leaflet.markercluster/dist/MarkerCluster.Default.css';
+// @ts-ignore
+import 'leaflet.markercluster';
 
 // Fix for default markers
 import icon from 'leaflet/dist/images/marker-icon.png';
@@ -155,19 +162,48 @@ export const Map = ({
         />
         <ViewController center={center} markers={markers} fitToMarkers={fitToMarkers} />
 
-        {markers.map((marker, index) => {
-          const hasPos = marker && marker.position && typeof marker.position.lat === 'number' && typeof marker.position.lng === 'number';
-          if (!hasPos) return null;
+        {/* Use markercluster plugin when available; otherwise render adjusted markers */}
+        {
+          // @ts-ignore
+          (L as any).markerClusterGroup ? (
+            (function MarkerClusterLayer({ markers: clusterMarkers }: { markers: MapProps['markers'] }) {
+              const map = useMap();
+              useEffect(() => {
+                // @ts-ignore
+                const Cluster = (L as any).markerClusterGroup;
+                const group = Cluster({ spiderfyOnMaxZoom: true, showCoverageOnHover: true, maxClusterRadius: 50, disableClusteringAtZoom: 18 });
 
-          const pos: [number, number] = [marker.position.lat, marker.position.lng];
-          const markerIcon = marker.type === 'helper' ? helperIcon : patientIcon;
+                (clusterMarkers || []).forEach((m) => {
+                  if (!m?.position) return;
+                  const icon = m.type === 'helper' ? helperIcon : patientIcon;
+                  const mk = L.marker([m.position.lat, m.position.lng], { icon });
+                  if (m.popup) mk.bindPopup(String(m.popup));
+                  group.addLayer(mk);
+                });
 
-          return (
-            <Marker key={index} position={pos} icon={markerIcon}>
-              {marker.popup && <Popup>{marker.popup}</Popup>}
-            </Marker>
-          );
-        })}
+                map.addLayer(group);
+                return () => {
+                  try { map.removeLayer(group); } catch (e) { /* ignore */ }
+                };
+              }, [map, JSON.stringify(clusterMarkers || [])]);
+              return null;
+            })({ markers })
+          ) : (
+            adjustedMarkers.map((marker, index) => {
+              const hasPos = marker && marker.adjustedPos && typeof marker.adjustedPos.lat === 'number' && typeof marker.adjustedPos.lng === 'number';
+              if (!hasPos) return null;
+
+              const pos: [number, number] = [marker.adjustedPos.lat, marker.adjustedPos.lng];
+              const markerIcon = marker.type === 'helper' ? helperIcon : patientIcon;
+
+              return (
+                <Marker key={index} position={pos} icon={markerIcon}>
+                  {marker.popup && <Popup>{marker.popup}</Popup>}
+                </Marker>
+              );
+            })
+          )
+        }
       </MapContainer>
     </div>
   );

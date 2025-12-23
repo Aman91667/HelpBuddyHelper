@@ -409,6 +409,24 @@ export const ChatWindow: React.FC<ChatWindowProps> = ({ serviceId, patientName, 
             >
               <MessageSquare className="w-5 h-5 text-gray-600" />
             </button>
+            <button
+              onClick={() => fileInputRef.current?.click()}
+              className="p-2 hover:bg-gray-100 rounded-full transition"
+              title="Attach file"
+            >
+              {uploading ? (
+                <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-gray-400" />
+              ) : (
+                <Paperclip className="w-5 h-5 text-gray-600" />
+              )}
+            </button>
+            <input
+              type="file"
+              ref={fileInputRef}
+              className="hidden"
+              onChange={handleFileChange}
+              accept="image/*,application/pdf,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document,audio/*"
+            />
             <input
               type="text"
               value={newMessage}

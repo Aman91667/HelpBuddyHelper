@@ -70,7 +70,7 @@ export default function CurrentJobCard({ service }: CurrentJobCardProps) {
               <Navigation className="w-4 h-4 mr-2" />
               Navigate
             </Button>
-            <Button variant="outline" className="flex-1 h-11">
+            <Button variant="outline" className="flex-1 h-11 chat-button">
               <MessageSquare className="w-4 h-4 mr-2" />
               Chat
             </Button>

@@ -247,6 +247,19 @@
     overflow: hidden;
   }
 
+  /* Ensure map leaves space on small screens for floating controls (chat buttons) */
+  @media (max-width: 640px) {
+    .map-fixed {
+      padding-bottom: 4.5rem; /* leave room for bottom controls/buttons */
+    }
+
+    /* Chat buttons should sit above the map content so they remain clickable */
+    .chat-button {
+      position: relative;
+      z-index: 60;
+    }
+  }
+
   .benefits-grid {
     @apply grid grid-cols-1 sm:grid-cols-2 gap-3;
   }
