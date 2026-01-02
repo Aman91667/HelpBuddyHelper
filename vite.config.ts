@@ -36,6 +36,18 @@ export default defineConfig({
       },
     },
   },
+  build: {
+    rollupOptions: {
+      output: {
+        manualChunks: {
+          'charts': ['recharts'],
+          'ui': ['@radix-ui/react-dialog', '@radix-ui/react-select'],
+          'vendor': ['react', 'react-dom', 'react-router-dom'],
+        }
+      }
+    },
+    chunkSizeWarningLimit: 1000,
+  },
   ssr: {
     // ensure lucide-react is bundled in SSR builds so Vite doesn't treat it as external
     noExternal: ['lucide-react']
