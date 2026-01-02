@@ -163,10 +163,15 @@ class ApiClient {
           continue;
         }
 
-        // Handle 401/403: attempt token refresh once, then retry
-        if (response.status === 401 || response.status === 403) {
+        // Handle authentication errors: 401/403 and backend's 400 'unauthenticated' responses.
+        // Treat them the same: attempt token refresh once, then retry the request.
+        const isAuthError = response.status === 401 || response.status === 403 || (
+          response.status === 400 && String(data?.error || '').toLowerCase().includes('unauthenticated')
+        );
+
+        if (isAuthError) {
           const errMsg = data?.error || `Request failed with status ${response.status}`;
-          
+
           // Prevent concurrent refresh attempts
           if (!this._refreshPromise) {
             this._refreshPromise = this.refreshAccessToken().finally(() => {
@@ -200,6 +205,16 @@ class ApiClient {
             serverMsg = txt || null;
           } catch (e) {
             serverMsg = null;
+          }
+
+          // Retry transient 5xx errors a few times before returning failure
+          if (response.status >= 500 && attempt < maxRetries) {
+            const waitMs = backoff;
+            if (import.meta.env.DEV) console.warn('[API] transient server error', response.status, 'retrying in', waitMs, 'ms', url);
+            await new Promise((res) => setTimeout(res, waitMs));
+            attempt += 1;
+            backoff *= 2;
+            continue;
           }
 
           const errMessage = data?.error || serverMsg || `Request failed with status ${response.status}`;
