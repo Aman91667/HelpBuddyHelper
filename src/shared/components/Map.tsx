@@ -125,6 +125,13 @@ export const Map = ({
 
   const centerPos: [number, number] = [center.lat, center.lng];
 
+  // Ensure we have an array of adjusted markers to render when markercluster
+  // plugin is not available. Keep the original shape but add `adjustedPos`.
+  const adjustedMarkers = (markers || []).map((m) => ({
+    ...m,
+    adjustedPos: m?.position ?? null,
+  }));
+
   let resolvedHeight =
     height === 'calc-vh'
       ? `calc(100vh - var(--app-header-height,64px) - var(--app-bottom-height,88px))`
@@ -166,28 +173,8 @@ export const Map = ({
         {
           // @ts-ignore
           (L as any).markerClusterGroup ? (
-            (function MarkerClusterLayer({ markers: clusterMarkers }: { markers: MapProps['markers'] }) {
-              const map = useMap();
-              useEffect(() => {
-                // @ts-ignore
-                const Cluster = (L as any).markerClusterGroup;
-                const group = Cluster({ spiderfyOnMaxZoom: true, showCoverageOnHover: true, maxClusterRadius: 50, disableClusteringAtZoom: 18 });
-
-                (clusterMarkers || []).forEach((m) => {
-                  if (!m?.position) return;
-                  const icon = m.type === 'helper' ? helperIcon : patientIcon;
-                  const mk = L.marker([m.position.lat, m.position.lng], { icon });
-                  if (m.popup) mk.bindPopup(String(m.popup));
-                  group.addLayer(mk);
-                });
-
-                map.addLayer(group);
-                return () => {
-                  try { map.removeLayer(group); } catch (e) { /* ignore */ }
-                };
-              }, [map, JSON.stringify(clusterMarkers || [])]);
-              return null;
-            })({ markers })
+            // Proper React component that uses hooks (useMap) inside React render
+            <MarkerClusterLayer markers={markers} />
           ) : (
             adjustedMarkers.map((marker, index) => {
               const hasPos = marker && marker.adjustedPos && typeof marker.adjustedPos.lat === 'number' && typeof marker.adjustedPos.lng === 'number';
@@ -208,3 +195,29 @@ export const Map = ({
     </div>
   );
 };
+
+function MarkerClusterLayer({ markers: clusterMarkers }: { markers: MapProps['markers'] }) {
+  const map = useMap();
+
+  useEffect(() => {
+    // @ts-ignore
+    const Cluster = (L as any).markerClusterGroup;
+    if (!Cluster) return;
+    const group = Cluster({ spiderfyOnMaxZoom: true, showCoverageOnHover: true, maxClusterRadius: 50, disableClusteringAtZoom: 18 });
+
+    (clusterMarkers || []).forEach((m) => {
+      if (!m?.position) return;
+      const icon = m.type === 'helper' ? helperIcon : patientIcon;
+      const mk = L.marker([m.position.lat, m.position.lng], { icon });
+      if (m.popup) mk.bindPopup(String(m.popup));
+      group.addLayer(mk);
+    });
+
+    map.addLayer(group);
+    return () => {
+      try { map.removeLayer(group); } catch (e) { /* ignore */ }
+    };
+  }, [map, JSON.stringify(clusterMarkers || [])]);
+
+  return null;
+}

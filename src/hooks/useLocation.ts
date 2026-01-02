@@ -47,8 +47,26 @@ export const useLocation = ({ enabled, helperId, updateInterval = 5000 }: UseLoc
         if (now - lastEmitRef.current >= updateInterval) {
           lastEmitRef.current = now;
 
-          // Send via socket for real-time
-          socketClient.emit('helper:location:update', locationData);
+          // Send via socket for real-time if connected; otherwise schedule a
+          // one-time emit when the socket connects to avoid lost events.
+          try {
+            if (socketClient.isConnected()) {
+              socketClient.emit('helper:location:update', locationData);
+            } else {
+              const onceHandler = () => {
+                try {
+                  socketClient.emit('helper:location:update', locationData);
+                } catch (e) {
+                  // ignore emit failures
+                }
+                // remove this listener after it's fired
+                try { socketClient.off('connect', onceHandler); } catch (e) { /* ignore */ }
+              };
+              socketClient.on('connect', onceHandler);
+            }
+          } catch (e) {
+            // Socket client may be unavailable; ignore and continue with API fallback
+          }
 
           // Also send via API as backup
           try {
