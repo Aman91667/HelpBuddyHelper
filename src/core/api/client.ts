@@ -17,9 +17,45 @@ class ApiClient {
   // client-side protection: short caches, pending markers, and cooldowns for sensitive endpoints
   private _cache: Record<string, { ts: number; data: any }> = {};
   private _cooldowns: Record<string, number> = {};
+  // track if a refresh is in progress to avoid concurrent refresh attempts
+  private _refreshPromise: Promise<boolean> | null = null;
 
   constructor(baseUrl: string) {
     this.baseUrl = baseUrl;
+  }
+
+  // Refresh access token using the refresh token endpoint
+  private async refreshAccessToken(): Promise<boolean> {
+    try {
+      const url = `${this.baseUrl}/auth/refresh`;
+      const response = await fetch(url, {
+        method: 'POST',
+        credentials: 'include',
+        headers: { 'Content-Type': 'application/json' },
+      });
+
+      if (!response.ok) {
+        console.warn('[API] Token refresh failed with status', response.status);
+        // On refresh failure, clear tokens and redirect to auth
+        localStorage.removeItem('accessToken');
+        localStorage.removeItem('refreshToken');
+        window.location.href = '/auth';
+        return false;
+      }
+
+      const data = await response.json().catch(() => null);
+      if (data?.data?.accessToken) {
+        localStorage.setItem('accessToken', data.data.accessToken);
+        if (data?.data?.refreshToken) {
+          localStorage.setItem('refreshToken', data.data.refreshToken);
+        }
+        return true;
+      }
+      return false;
+    } catch (err) {
+      console.error('[API] Token refresh error', err);
+      return false;
+    }
   }
 
   private getHeaders(): HeadersInit {
@@ -127,9 +163,25 @@ class ApiClient {
           continue;
         }
 
-        // Handle 401/403 gracefully: return structured failure and set a short cooldown for /auth/me
+        // Handle 401/403: attempt token refresh once, then retry
         if (response.status === 401 || response.status === 403) {
           const errMsg = data?.error || `Request failed with status ${response.status}`;
+          
+          // Prevent concurrent refresh attempts
+          if (!this._refreshPromise) {
+            this._refreshPromise = this.refreshAccessToken().finally(() => {
+              this._refreshPromise = null;
+            });
+          }
+
+          const refreshed = await this._refreshPromise;
+          if (refreshed && attempt < maxRetries) {
+            // Retry the original request with new token
+            attempt += 1;
+            continue;
+          }
+
+          // Refresh failed or out of retries
           try {
             if (isAuthMe) this._cooldowns[endpoint] = Date.now() + 30_000; // 30s cooldown for auth/me
           } catch (e) {

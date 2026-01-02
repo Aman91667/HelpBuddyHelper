@@ -187,9 +187,23 @@ export default function DashboardPage() {
         setRequestCountdown(0);
         navigate(`/jobs/${serviceId}`);
       } else {
+        // Provide specific error messages based on response error text
+        let errorMsg = 'Request may have been taken by another helper';
+        if (response.error) {
+          const err = response.error.toLowerCase();
+          if (err.includes('already') || err.includes('accepted')) {
+            errorMsg = 'This request was already accepted by another helper';
+          } else if (err.includes('permission') || err.includes('authorized')) {
+            errorMsg = 'You do not have permission to accept this request';
+          } else if (err.includes('active')) {
+            errorMsg = 'You already have an active service. Complete it before accepting new requests.';
+          } else {
+            errorMsg = response.error;
+          }
+        }
         toast({
           title: 'Failed to Accept',
-          description: response.error || 'Request may have been taken by another helper',
+          description: errorMsg,
           variant: 'destructive',
         });
         setPendingRequest(null);
@@ -197,9 +211,10 @@ export default function DashboardPage() {
         setRequestCountdown(0);
       }
     } catch (error) {
+      const errorMsg = error instanceof Error ? error.message : 'Failed to accept request';
       toast({
         title: 'Error',
-        description: 'Failed to accept request',
+        description: errorMsg,
         variant: 'destructive',
       });
     } finally {
