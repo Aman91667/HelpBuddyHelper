@@ -22,7 +22,7 @@ class ApiClient {
 
   constructor(baseUrl: string) {
     // Normalize baseUrl to avoid trailing slashes causing malformed joins later
-    this.baseUrl = String(baseUrl || '').replace(/\/+$, '');
+    this.baseUrl = String(baseUrl || '').replace(/\/+$/, '');
   }
 
   // Refresh access token using the refresh token endpoint
