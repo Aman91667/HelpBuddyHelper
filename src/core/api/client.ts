@@ -21,7 +21,8 @@ class ApiClient {
   private _refreshPromise: Promise<boolean> | null = null;
 
   constructor(baseUrl: string) {
-    this.baseUrl = baseUrl;
+    // Normalize baseUrl to avoid trailing slashes causing malformed joins later
+    this.baseUrl = String(baseUrl || '').replace(/\/+$, '');
   }
 
   // Refresh access token using the refresh token endpoint
@@ -70,7 +71,19 @@ class ApiClient {
     endpoint: string,
     options: RequestInit = {}
   ): Promise<ApiResponse<T>> {
-    const url = `${this.baseUrl}${endpoint}`;
+    // Normalize and validate endpoint to avoid accidental concat bugs
+    let ep = endpoint ?? '';
+    if (typeof ep !== 'string') ep = String(ep);
+    ep = ep.trim();
+    const httpMethods = ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS', 'HEAD'];
+    // If caller accidentally passed an HTTP method as endpoint (e.g., 'GET'), reject early and log for debugging
+    if (httpMethods.includes(ep.toUpperCase())) {
+      console.warn('[API] Invalid request - endpoint looks like an HTTP method:', ep);
+      return { success: false, error: 'Invalid endpoint' } as ApiResponse<T>;
+    }
+    if (!ep.startsWith('/')) ep = '/' + ep;
+
+    const url = `${this.baseUrl}${ep}`;
     const maxRetries = 4;
     let attempt = 0;
     let backoff = 1000;
@@ -78,17 +91,17 @@ class ApiClient {
     const now = Date.now();
     const method = (options.method || 'GET').toUpperCase();
     const isGet = method === 'GET';
-    const isAuthMe = endpoint === '/auth/me' && isGet;
-    const isActiveService = endpoint === '/services/active' && isGet;
+    const isAuthMe = ep === '/auth/me' && isGet;
+    const isActiveService = ep === '/services/active' && isGet;
     
 
     // If we have a recent cached response for /auth/me or /services/active, return it (short TTL)
-    if ((isAuthMe || isActiveService) && this._cache[endpoint] && now - this._cache[endpoint].ts < 10_000) {
-      return this._cache[endpoint].data;
+    if ((isAuthMe || isActiveService) && this._cache[ep] && now - this._cache[ep].ts < 10_000) {
+      return this._cache[ep].data;
     }
 
     // If a client-side cooldown exists for this endpoint (set after 429), avoid hitting server
-    const cd = this._cooldowns[endpoint];
+    const cd = this._cooldowns[ep];
     if (cd && cd > now) {
       return { success: false, error: 'Client-side cooldown after rate limit' } as ApiResponse<T>;
     }
@@ -131,7 +144,7 @@ class ApiClient {
           try {
             if (isActiveService) {
               // set a longer cooldown (5 minutes) and do not retry
-              this._cooldowns[endpoint] = Date.now() + 5 * 60 * 1000;
+              this._cooldowns[ep] = Date.now() + 5 * 60 * 1000;
               console.warn('API rate limited for /services/active — applying 5m client cooldown');
               return { success: false, error: data?.error || `Request failed with status ${response.status}` };
             }
@@ -140,19 +153,19 @@ class ApiClient {
               // polled; if the server responds 429, apply a moderate cooldown
               // (45s) to avoid hammering.
               const cooldown = Math.max(waitMs, 45 * 1000);
-              this._cooldowns[endpoint] = Date.now() + cooldown;
-              console.warn(`API rate limited for ${endpoint} — applying ${Math.round(cooldown/1000)}s client cooldown`);
+              this._cooldowns[ep] = Date.now() + cooldown;
+              console.warn(`API rate limited for ${ep} — applying ${Math.round(cooldown/1000)}s client cooldown`);
               return { success: false, error: data?.error || `Request failed with status ${response.status}` };
             }
             // set a client-side cooldown to avoid hammering the endpoint (honor Retry-After)
-            this._cooldowns[endpoint] = Date.now() + waitMs;
+            this._cooldowns[ep] = Date.now() + waitMs;
           } catch (e) {
             // ignore
           }
           // If we've exhausted retries, return an error response to caller
           if (attempt === maxRetries) {
             const retryWindow = 30_000; // default 30s cooldown
-            this._cooldowns[endpoint] = Date.now() + retryWindow;
+            this._cooldowns[ep] = Date.now() + retryWindow;
             console.error('API Rate limit exceeded:', url);
             return { success: false, error: data?.error || `Request failed with status ${response.status}` };
           }
@@ -188,7 +201,7 @@ class ApiClient {
 
           // Refresh failed or out of retries
           try {
-            if (isAuthMe) this._cooldowns[endpoint] = Date.now() + 30_000; // 30s cooldown for auth/me
+            if (isAuthMe) this._cooldowns[ep] = Date.now() + 30_000; // 30s cooldown for auth/me
           } catch (e) {
             // ignore
           }
@@ -238,7 +251,7 @@ class ApiClient {
         // Cache successful responses for sensitive GET endpoints to reduce request churn
         if ((isAuthMe || isActiveService) && data) {
           try {
-            this._cache[endpoint] = { ts: Date.now(), data };
+            this._cache[ep] = { ts: Date.now(), data };
           } catch (e) {
             // ignore cache failures
           }
