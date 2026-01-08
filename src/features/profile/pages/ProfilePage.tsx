@@ -80,14 +80,14 @@ function EditProfileModal({
     <div
       role="dialog"
       aria-modal="true"
-      className="fixed inset-0 z-50 flex items-center justify-center p-4"
+      className="fixed inset-0 z-50 flex items-center justify-center p-2 sm:p-4 overflow-hidden"
     >
       <div className="absolute inset-0 bg-black/30 backdrop-blur-sm" onClick={onClose} />
       <motion.div
         initial={{ scale: 0.98, opacity: 0 }}
         animate={{ scale: 1, opacity: 1 }}
         transition={{ duration: 0.18 }}
-        className="relative z-10 max-w-lg w-full bg-card/95 border border-border/40 rounded-2xl shadow-glow p-5"
+        className="relative z-10 max-w-lg w-full bg-card/95 border border-border/40 rounded-2xl shadow-glow p-5 max-h-[calc(100vh-32px)] sm:max-h-[calc(100vh-48px)] overflow-y-auto"
       >
         <h3 className="text-lg font-semibold flex items-center gap-3">
           Edit profile

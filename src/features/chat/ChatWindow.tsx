@@ -33,8 +33,10 @@ export const ChatWindow: React.FC<ChatWindowProps> = ({ serviceId, patientName, 
   const [templates, setTemplates] = useState<any[]>([]);
   const [showTemplates, setShowTemplates] = useState(false);
   const [attachments, setAttachments] = useState<Record<string, string>>({});
+  const [uploading, setUploading] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const typingTimeoutRef = useRef<number>();
+  const fileInputRef = useRef<HTMLInputElement>(null);
   const currentUserId = localStorage.getItem('userId') || '';
 
   useEffect(() => {
@@ -128,7 +130,7 @@ export const ChatWindow: React.FC<ChatWindowProps> = ({ serviceId, patientName, 
         if (!resp.ok) {
           // fallback to public fileUrl if available
           if (m.fileUrl) {
-            setAttachments(prev => ({ ...prev, [m.id]: m.fileUrl }));
+            setAttachments(prev => ({ ...prev, [m.id]: m.fileUrl! }));
           }
           return;
         }
@@ -137,7 +139,7 @@ export const ChatWindow: React.FC<ChatWindowProps> = ({ serviceId, patientName, 
         setAttachments(prev => ({ ...prev, [m.id]: url }));
       } catch (e) {
         if (m.fileUrl) {
-          setAttachments(prev => ({ ...prev, [m.id]: m.fileUrl }));
+          setAttachments(prev => ({ ...prev, [m.id]: m.fileUrl! }));
         }
       }
     });
@@ -148,14 +150,7 @@ export const ChatWindow: React.FC<ChatWindowProps> = ({ serviceId, patientName, 
         try { URL.revokeObjectURL(u); } catch (e) { /* ignore */ }
       });
     };
-
-    // cleanup to revoke object URLs when messages change/unmount
-    return () => {
-      Object.values(attachments).forEach((u) => {
-        try { URL.revokeObjectURL(u); } catch (e) { /* ignore */ }
-      });
-    };
-  }, [messages]);
+  }, [messages, attachments]);
 
   const handleTyping = () => {
     chatSocket.emitTypingStart(serviceId);
@@ -213,14 +208,78 @@ export const ChatWindow: React.FC<ChatWindowProps> = ({ serviceId, patientName, 
     chatSocket.emitTypingStop(serviceId);
   };
 
+  const handleFileChange = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const files = event.target.files;
+    if (!files || files.length === 0) return;
+
+    const file = files[0];
+    setUploading(true);
+
+    try {
+      // Determine message type based on file type
+      let messageType: 'IMAGE' | 'FILE' | 'VOICE' = 'FILE';
+      if (file.type.startsWith('image/')) {
+        messageType = 'IMAGE';
+      } else if (file.type.startsWith('audio/')) {
+        messageType = 'VOICE';
+      }
+
+      const response = await apiClient.uploadChatFile(file, messageType);
+      
+      if (response.success && response.data) {
+        const messageData = {
+          serviceId,
+          messageType,
+          fileName: file.name,
+          fileUrl: response.data.fileUrl,
+          mimeType: file.type,
+          fileSize: file.size,
+        };
+
+        // Optimistic update
+        const tempMessage: Message = {
+          id: Date.now().toString(),
+          serviceId,
+          senderId: currentUserId,
+          senderType: 'HELPER',
+          messageType,
+          fileName: file.name,
+          fileUrl: response.data.fileUrl,
+          fileSize: file.size,
+          mimeType: file.type,
+          isRead: false,
+          createdAt: new Date().toISOString(),
+        };
+
+        setMessages(prev => [...prev, tempMessage]);
+        scrollToBottom();
+
+        try {
+          await apiClient.sendChatMessage(messageData);
+        } catch (error) {
+          console.error('Failed to send file message:', error);
+          setMessages(prev => prev.filter(m => m.id !== tempMessage.id));
+        }
+      }
+    } catch (error) {
+      console.error('Failed to upload file:', error);
+    } finally {
+      setUploading(false);
+      // Reset file input
+      if (fileInputRef.current) {
+        fileInputRef.current.value = '';
+      }
+    }
+  };
+
   const formatTime = (dateString: string) => {
     const date = new Date(dateString);
     return date.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
   };
 
   const renderMessage = (message: Message) => {
-    // Helper sends messages with senderType 'HELPER'
-    const isSentByMe = message.senderType === 'HELPER';
+    // Helper sends messages with senderType 'HELPER' and matching senderId
+    const isSentByMe = message.senderType === 'HELPER' && message.senderId === currentUserId;
     
     console.log('[HELPER] Rendering message:', {
       id: message.id,
@@ -236,9 +295,9 @@ export const ChatWindow: React.FC<ChatWindowProps> = ({ serviceId, patientName, 
         key={message.id}
         initial={{ opacity: 0, y: 10 }}
         animate={{ opacity: 1, y: 0 }}
-        className={`flex ${isSentByMe ? 'justify-start' : 'justify-end'} mb-3`}
+        className={`flex ${isSentByMe ? 'justify-end' : 'justify-start'} mb-3`}
       >
-        <div className={`max-w-[70%] ${isSentByMe ? 'order-1' : 'order-2'}`}>
+        <div className={`max-w-[70%]`}>
           <div
             className={`rounded-2xl px-4 py-2 ${
               isSentByMe
@@ -331,8 +390,8 @@ export const ChatWindow: React.FC<ChatWindowProps> = ({ serviceId, patientName, 
   };
 
   return (
-    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-      <div className="bg-white rounded-lg shadow-xl w-full max-w-2xl h-[600px] flex flex-col">
+    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-2 sm:p-4 overflow-hidden">
+      <div className="bg-white rounded-lg shadow-xl w-full max-w-2xl h-[calc(100vh-32px)] sm:h-[calc(100vh-48px)] md:h-[600px] md:max-h-[85vh] flex flex-col overflow-hidden">
         {/* Header */}
         <div className="flex items-center justify-between p-4 border-b bg-emerald-500 text-white rounded-t-lg">
           <div className="flex items-center gap-3">
@@ -441,7 +500,7 @@ export const ChatWindow: React.FC<ChatWindowProps> = ({ serviceId, patientName, 
                 }
               }}
               placeholder="Type a message..."
-              className="flex-1 px-4 py-2 border rounded-full focus:outline-none focus:ring-2 focus:ring-helpbudy-green"
+              className="flex-1 px-4 py-2 border rounded-full focus:outline-none focus:ring-2 focus:ring-emerald-500"
             />
             <button
               onClick={() => sendMessage()}

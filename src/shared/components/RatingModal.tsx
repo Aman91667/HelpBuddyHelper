@@ -29,8 +29,8 @@ export function RatingModal({ isOpen, onClose, onSubmit, personName, personType 
   };
 
   return (
-    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-      <div className="bg-white rounded-2xl max-w-md w-full p-6 relative">
+    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-2 sm:p-4 overflow-hidden">
+      <div className="bg-white rounded-2xl max-w-md w-full p-6 relative h-auto max-h-[calc(100vh-32px)] sm:max-h-[calc(100vh-48px)] overflow-y-auto">
         <button
           onClick={onClose}
           className="absolute top-4 right-4 text-gray-400 hover:text-gray-600"

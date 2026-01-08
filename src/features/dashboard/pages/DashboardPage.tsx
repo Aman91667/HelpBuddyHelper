@@ -433,13 +433,13 @@ export default function DashboardPage() {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="fixed inset-0 bg-black/60 backdrop-blur-sm z-60 flex items-center justify-center p-4"
+            className="fixed inset-0 bg-black/60 backdrop-blur-sm z-60 flex items-center justify-center p-2 sm:p-4 overflow-hidden"
           >
             <motion.div
               initial={{ scale: 0.9, y: 20 }}
               animate={{ scale: 1, y: 0 }}
               exit={{ scale: 0.9, y: 20 }}
-              className="w-full max-w-md rounded-2xl bg-white shadow-2xl overflow-hidden"
+              className="w-full max-w-md rounded-2xl bg-white shadow-2xl overflow-hidden max-h-[calc(100vh-32px)] sm:max-h-[calc(100vh-48px)] overflow-y-auto flex flex-col"
             >
               <div className="bg-gradient-to-r from-emerald-500 to-green-500 p-6 text-white">
                 <div className="flex items-center justify-between mb-2">

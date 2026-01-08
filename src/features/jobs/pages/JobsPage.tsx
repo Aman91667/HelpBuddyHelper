@@ -103,12 +103,20 @@ export default function JobsPage() {
       }
     };
 
+    const handlePatientLocation = (data: any) => {
+      if (data?.serviceId === serviceId) {
+        setPatientLocation({ lat: data.lat, lng: data.lng });
+      }
+    };
+
     socketClient.on('service:updated', handleServiceUpdated);
     socketClient.on('service:cancelled', handleServiceCancelled);
+    socketClient.on('patient:location', handlePatientLocation);
 
     return () => {
       socketClient.off('service:updated', handleServiceUpdated);
       socketClient.off('service:cancelled', handleServiceCancelled);
+      socketClient.off('patient:location', handlePatientLocation);
     };
   }, [serviceId, fetchService, navigate, toast]);
 

@@ -37,14 +37,14 @@ export default function ServiceRequestModal({ service, onAccept, onReject }: Ser
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         exit={{ opacity: 0 }}
-        className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-background/90 backdrop-blur-md"
+        className="fixed inset-0 z-50 flex items-center justify-center p-2 sm:p-4 overflow-hidden bg-background/90 backdrop-blur-md"
       >
         <motion.div
           initial={{ scale: 0.9, y: 20, opacity: 0 }}
           animate={{ scale: 1, y: 0, opacity: 1 }}
           exit={{ scale: 0.9, y: 20, opacity: 0 }}
           transition={{ type: 'spring', damping: 25, stiffness: 300 }}
-          className="w-full max-w-md"
+          className="w-full max-w-md max-h-[calc(100vh-32px)] sm:max-h-[calc(100vh-48px)] overflow-y-auto"
         >
           <Card className="border-2 border-primary/50 shadow-2xl bg-card overflow-hidden">
             {/* Timer Progress Bar */}
